@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Fusion - Enhanced Experience</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Poppins for a modern, friendly feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- External Libraries for File Processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        /* ==============================================
+          1. VISUAL ENHANCEMENTS & DESIGN LANGUAGE
+         ============================================== */
+        :root {
+            --font-family: 'Poppins', sans-serif;
+            
+            /* Light Mode Palette */
+            --bg-start-light: #e0eafc;
+            --bg-end-light: #cfdef3;
+            --card-bg-light: rgba(255, 255, 255, 0.4);
+            --card-shadow-light: rgba(0, 0, 0, 0.1);
+            --text-primary-light: #2c3e50;
+            --text-secondary-light: #34495e;
+            --border-light: rgba(255, 255, 255, 0.8);
+            --accent-light: #3498db;
+            --neumorphic-shadow-light-1: inset 6px 6px 12px #c5d0e6, inset -6px -6px 12px #fbffff;
+            --neumorphic-shadow-light-2: 6px 6px 12px #c5d0e6, -6px -6px 12px #fbffff;
+
+            /* Dark Mode Palette */
+            --bg-start-dark: #232526;
+            --bg-end-dark: #414345;
+            --card-bg-dark: rgba(44, 47, 51, 0.6);
+            --card-shadow-dark: rgba(0, 0, 0, 0.4);
+            --text-primary-dark: #ecf0f1;
+            --text-secondary-dark: #bdc3c7;
+            --border-dark: rgba(255, 255, 255, 0.1);
+            --accent-dark: #5dade2;
+            --neumorphic-shadow-dark-1: inset 5px 5px 10px #1c1e20, inset -5px -5px 10px #2a2c2e;
+            --neumorphic-shadow-dark-2: 5px 5px 10px #1c1e20, -5px -5px 10px #2a2c2e;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: linear-gradient(135deg, var(--bg-start-light), var(--bg-end-light));
+            color: var(--text-primary-light);
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        body.dark {
+            background: linear-gradient(135deg, var(--bg-start-dark), var(--bg-end-dark));
+            color: var(--text-primary-dark);
+        }
+
+        /* Animated background pattern */
+        body::before {
+            content: '';
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80"><path fill="%239a9a9a" fill-opacity="0.05" d="M14 16H9v-2h5V9.87a4 4 0 1 1 2 0V14h5v2h-5v5.13a4 4 0 1 1-2 0V16zM54 16h-5v-2h5V9.87a4 4 0 1 1 2 0V14h5v2h-5v5.13a4 4 0 1 1-2 0V16zM14 56H9v-2h5V49.87a4 4 0 1 1 2 0V54h5v2h-5v5.13a4 4 0 1 1-2 0V56zM54 56h-5v-2h5V49.87a4 4 0 1 1 2 0V54h5v2h-5v5.13a4 4 0 1 1-2 0V56z"></path></svg>');
+            animation: bg-pan 30s linear infinite;
+            will-change: background-position;
+            z-index: -1;
+        }
+        @keyframes bg-pan {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+
+        /* Card and component styling */
+        .main-card {
+            background: var(--card-bg-light);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 16px 40px var(--card-shadow-light);
+            transition: background 0.5s ease, border 0.5s ease, box-shadow 0.5s ease;
+        }
+        body.dark .main-card {
+            background: var(--card-bg-dark);
+            border: 1px solid var(--border-dark);
+            box-shadow: 0 16px 40px var(--card-shadow-dark);
+        }
+
+        .secondary-text { color: var(--text-secondary-light); }
+        body.dark .secondary-text { color: var(--text-secondary-dark); }
+
+        .accent-color { color: var(--accent-light); }
+        body.dark .accent-color { color: var(--accent-dark); }
+        
+        .accent-border { border-color: var(--accent-light); }
+        body.dark .accent-border { border-color: var(--accent-dark); }
+
+        .main-border { border-color: var(--border-light); }
+        body.dark .main-border { border-color: var(--border-dark); }
+
+        /* ==============================================
+          2. DYNAMIC ENHANCEMENTS & MICRO-INTERACTIONS
+         ============================================== */
+        .neumorphic-inset {
+            border-radius: 12px;
+            background: var(--bg-start-light);
+            box-shadow: var(--neumorphic-shadow-light-1);
+            color: var(--text-secondary-light);
+            transition: all 0.3s ease;
+        }
+        body.dark .neumorphic-inset {
+            background: var(--bg-start-dark);
+            box-shadow: var(--neumorphic-shadow-dark-1);
+            color: var(--text-secondary-dark);
+        }
+
+        .neumorphic-button {
+            border-radius: 12px;
+            background: var(--bg-start-light);
+            box-shadow: var(--neumorphic-shadow-light-2);
+            transition: all 0.2s ease-out;
+        }
+        body.dark .neumorphic-button {
+            background: var(--bg-start-dark);
+            box-shadow: var(--neumorphic-shadow-dark-2);
+        }
+        .neumorphic-button:active:not(:disabled) { box-shadow: var(--neumorphic-shadow-light-1); }
+        body.dark .neumorphic-button:active:not(:disabled) { box-shadow: var(--neumorphic-shadow-dark-1); }
+
+        /* Section transition */
+        .section-hidden {
+            opacity: 0;
+            transform: translateY(20px);
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.4s ease, transform 0.4s ease, max-height 0.5s ease, margin 0.5s ease, padding 0.5s ease;
+        }
+        .section-visible {
+            opacity: 1;
+            transform: translateY(0);
+            max-height: 500px; /* Generous max-height for content */
+        }
+        
+        /* Skeleton loader */
+        .skeleton-loader {
+            background-color: var(--text-secondary-light);
+            opacity: 0.3;
+            border-radius: 8px;
+            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        body.dark .skeleton-loader { background-color: var(--text-secondary-dark); }
+        @keyframes pulse { 50% { opacity: .5; } }
+
+        /* Custom focus states for accessibility */
+        *:focus-visible {
+            outline: 2px solid var(--accent-light);
+            outline-offset: 2px;
+            border-radius: 6px;
+        }
+        body.dark *:focus-visible { outline-color: var(--accent-dark); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 text-sm md:text-base">
+
+    <!-- Main application card -->
+    <div class="w-full max-w-2xl main-card rounded-3xl p-6 md:p-8 relative overflow-hidden h-[95vh] max-h-[800px] flex flex-col">
+        
+        <!-- FIXED: Date and Time in corners -->
+        <div id="date-display" class="absolute top-6 left-6 text-xs md:text-sm secondary-text"></div>
+        <div class="absolute top-6 right-6 flex items-center space-x-4">
+            <div id="time-display" class="text-xs md:text-sm secondary-text"></div>
+            <button id="theme-toggle" class="neumorphic-button p-2.5" aria-label="Toggle theme">
+                <svg id="theme-icon-light" class="h-5 w-5 accent-color" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                <svg id="theme-icon-dark" class="h-5 w-5 hidden accent-color" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            </button>
+        </div>
+
+        <header class="text-center flex-shrink-0 pt-8">
+            <!-- FIXED: Reduced font size and added subtitle -->
+            <h1 class="text-3xl md:text-4xl font-bold tracking-tight">File Fusion</h1>
+            <p class="text-sm md:text-base secondary-text mt-1">Merge and Split Excel Files with ease</p>
+        </header>
+
+        <!-- Main content area with internal scrolling -->
+        <main class="space-y-6 mt-6 flex-grow overflow-y-auto pr-2">
+            <!-- Step 1: Controls -->
+            <section class="space-y-3">
+                <label class="font-semibold block text-left">Step 1: Choose Operation</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="relative">
+                        <select id="operation" class="w-full p-3 pr-10 appearance-none neumorphic-inset focus:outline-none">
+                            <option value="merge">Merge Files</option>
+                            <option value="split">Split File</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 secondary-text">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                    <div id="split-options" class="section-hidden">
+                        <input type="number" id="chunkSize" value="100" min="1" class="w-full p-3 neumorphic-inset focus:outline-none" placeholder="Rows per file">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 2: Upload Files -->
+            <section>
+                <label class="font-semibold block text-left mb-3">Step 2: Upload Files</label>
+                <div id="dropzone" class="border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 accent-border">
+                    <input type="file" id="fileInput" class="hidden" multiple accept=".csv, .xlsx">
+                    <div class="flex flex-col items-center justify-center space-y-2">
+                        <svg class="w-10 h-10 accent-color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-4-4V7a4 4 0 014-4h1.586A3 3 0 0111.172 4H12.5A2.5 2.5 0 0115 6.5V7m6 4v3m0 3v-3m-3-3h3m-3 3h3M3 16a3 3 0 106 0 3 3 0 00-6 0z" /></svg>
+                        <p class="font-semibold secondary-text">Drag & drop files or <span class="font-bold accent-color">browse</span></p>
+                    </div>
+                </div>
+                <div id="file-list-container" class="mt-4 text-left space-y-2 max-h-40 overflow-y-auto pr-2">
+                    <!-- File items will be injected here -->
+                </div>
+            </section>
+
+            <!-- Step 3: Process -->
+            <section id="process-section" class="space-y-3 border-t main-border section-hidden">
+                <label class="font-semibold block text-left">Step 3: Process & Download</label>
+                <div class="flex flex-col md:flex-row items-center gap-4">
+                    <div class="relative w-full md:w-1/3">
+                        <select id="outputFormat" class="w-full p-3 pr-10 appearance-none neumorphic-inset focus:outline-none">
+                            <option value="csv">as CSV</option>
+                            <option value="xlsx">as Excel (XLSX)</option>
+                            <option value="xls">as Excel (XLS 97-2003)</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 secondary-text">
+                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                    <button id="process-btn" class="w-full md:w-2/3 neumorphic-button font-bold py-3 px-6 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Process Files
+                    </button>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="text-center pt-4 border-t main-border flex-shrink-0">
+            <p class="text-xs secondary-text">Built by Samar</p>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div id="loading-modal" class="fixed inset-0 bg-black/50 flex-col items-center justify-center z-50 hidden">
+        <div class="p-8 rounded-2xl text-center main-card">
+            <svg class="animate-spin h-12 w-12 mx-auto accent-color" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <p id="loading-text" class="mt-4 font-semibold">Processing...</p>
+        </div>
+    </div>
+    <div id="error-modal" class="fixed inset-0 bg-black/50 flex-col items-center justify-center z-50 p-4 hidden">
+        <div class="p-8 rounded-2xl max-w-md w-full main-card border-2 border-red-500/50">
+            <h3 class="text-xl font-bold mb-4 text-red-400">An Error Occurred</h3>
+            <p id="error-text" class="mb-6 secondary-text"></p>
+            <button onclick="document.getElementById('error-modal').classList.add('hidden')" class="w-full neumorphic-button font-bold py-2 px-4 text-red-400">Close</button>
+        </div>
+    </div>
+
+
+    <script>
+        // --- DOM Element References ---
+        const operationSelect = document.getElementById('operation');
+        const splitOptionsDiv = document.getElementById('split-options');
+        const fileListContainer = document.getElementById('file-list-container');
+        const processSection = document.getElementById('process-section');
+        const themeToggle = document.getElementById('theme-toggle');
+        // FIXED: New date and time element references
+        const dateDisplayEl = document.getElementById('date-display');
+        const timeDisplayEl = document.getElementById('time-display');
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const processBtn = document.getElementById('process-btn');
+        const loadingModal = document.getElementById('loading-modal');
+        const loadingText = document.getElementById('loading-text');
+        const errorModal = document.getElementById('error-modal');
+        const errorText = document.getElementById('error-text');
+
+        let uploadedFiles = [];
+
+        // --- Event Listeners ---
+        operationSelect.addEventListener('change', handleOperationChange);
+        dropzone.addEventListener('click', () => fileInput.click());
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => dropzone.addEventListener(eventName, e => {
+            e.preventDefault();
+            e.stopPropagation();
+        }));
+        dropzone.addEventListener('dragenter', () => dropzone.classList.add('scale-105', 'shadow-lg'));
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('scale-105', 'shadow-lg'));
+        dropzone.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        processBtn.addEventListener('click', processFiles);
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // --- Functions ---
+        
+        function handleOperationChange() {
+            const isSplit = operationSelect.value === 'split';
+            splitOptionsDiv.classList.toggle('section-visible', isSplit);
+            splitOptionsDiv.classList.toggle('section-hidden', !isSplit);
+            updateFileListUI();
+        }
+
+        function handleFileSelect(e) { handleFiles(e.target.files); }
+        function handleDrop(e) {
+            dropzone.classList.remove('scale-105', 'shadow-lg');
+            handleFiles(e.dataTransfer.files);
+        }
+
+        function handleFiles(files) {
+            uploadedFiles = Array.from(files);
+            updateFileListUI();
+        }
+        
+        function setSectionVisibility(element, isVisible) {
+            const isCurrentlyVisible = element.classList.contains('section-visible');
+            if (isVisible === isCurrentlyVisible) return;
+
+            element.classList.toggle('section-visible', isVisible);
+            element.classList.toggle('section-hidden', !isVisible);
+            if (isVisible) {
+                element.classList.add('mt-6', 'pt-6');
+            } else {
+                element.classList.remove('mt-6', 'pt-6');
+            }
+        }
+
+        function updateFileListUI() {
+            fileListContainer.innerHTML = '';
+            
+            const isSplit = operationSelect.value === 'split';
+            if (isSplit && uploadedFiles.length > 1) {
+                showError("For splitting, please upload only one file.");
+                uploadedFiles = [];
+            }
+            
+            const showProcessSection = uploadedFiles.length > 0;
+            setSectionVisibility(processSection, showProcessSection);
+
+            if (uploadedFiles.length === 0) return;
+
+            // Skeleton loader for perceived performance
+            uploadedFiles.forEach(() => {
+                const skeleton = document.createElement('div');
+                skeleton.className = 'h-12 w-full skeleton-loader';
+                fileListContainer.appendChild(skeleton);
+            });
+
+            setTimeout(() => {
+                fileListContainer.innerHTML = '';
+                uploadedFiles.forEach((file, index) => {
+                    const fileElement = document.createElement('div');
+                    fileElement.className = 'neumorphic-inset p-3 flex items-center justify-between text-sm section-hidden';
+                    fileElement.innerHTML = `
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <svg class="w-6 h-6 flex-shrink-0 accent-color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span class="truncate secondary-text">${file.name}</span>
+                        </div>
+                        <button class="remove-file-btn p-1 rounded-full hover:bg-red-500/20" data-index="${index}" aria-label="Remove file">
+                            <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    `;
+                    fileListContainer.appendChild(fileElement);
+                    requestAnimationFrame(() => fileElement.classList.replace('section-hidden', 'section-visible'));
+                });
+                document.querySelectorAll('.remove-file-btn').forEach(btn => btn.addEventListener('click', removeFile));
+            }, 300);
+        }
+
+        function removeFile(e) {
+            const indexToRemove = parseInt(e.currentTarget.dataset.index, 10);
+            uploadedFiles.splice(indexToRemove, 1);
+            updateFileListUI();
+        }
+
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    try {
+                        const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                        const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                        resolve(json);
+                    } catch (err) {
+                        reject(new Error(`Could not process file: ${file.name}. Is it a valid CSV/XLSX?`));
+                    }
+                };
+                reader.onerror = err => reject(err);
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        async function processFiles() {
+            if (uploadedFiles.length === 0) return showError("No files uploaded.");
+            showLoading(true, "Initializing...");
+            processBtn.disabled = true;
+            try {
+                if (operationSelect.value === 'merge') await mergeFiles();
+                else await splitFile();
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                showLoading(false);
+                processBtn.disabled = false;
+            }
+        }
+
+        async function mergeFiles() {
+            let mergedData = [];
+            for (let i = 0; i < uploadedFiles.length; i++) {
+                showLoading(true, `Reading file ${i + 1}/${uploadedFiles.length}...`);
+                mergedData.push(...await readFile(uploadedFiles[i]));
+            }
+            showLoading(true, "Generating final file...");
+            downloadFile(mergedData, `merged_file`);
+        }
+
+        async function splitFile() {
+            showLoading(true, "Reading file...");
+            const data = await readFile(uploadedFiles[0]);
+            const chunkSize = parseInt(document.getElementById('chunkSize').value, 10);
+            if (isNaN(chunkSize) || chunkSize <= 0) throw new Error("Invalid chunk size. Please enter a number greater than 0.");
+            
+            const zip = new JSZip();
+            const numChunks = Math.ceil(data.length / chunkSize);
+            const outputFormat = document.getElementById('outputFormat').value;
+            const baseFilename = uploadedFiles[0].name.replace(/\.[^/.]+$/, "");
+
+            for (let i = 0; i < numChunks; i++) {
+                showLoading(true, `Creating chunk ${i + 1}/${numChunks}...`);
+                await new Promise(resolve => setTimeout(resolve, 0)); // Allow UI to update
+                const chunk = data.slice(i * chunkSize, (i + 1) * chunkSize);
+                const filename = `${baseFilename}_part_${i + 1}.${outputFormat}`;
+                const newSheet = XLSX.utils.json_to_sheet(chunk);
+                
+                if (outputFormat === 'csv') {
+                    zip.file(filename, XLSX.utils.sheet_to_csv(newSheet));
+                } else if (outputFormat === 'xlsx') {
+                    const newWB = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(newWB, newSheet, 'Sheet1');
+                    const fileBuffer = XLSX.write(newWB, { bookType: 'xlsx', type: 'array' });
+                    zip.file(filename, fileBuffer);
+                } else if (outputFormat === 'xls') { // Added XLS output for split files
+                    const newWB = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(newWB, newSheet, 'Sheet1');
+                    const fileBuffer = XLSX.write(newWB, { bookType: 'xls', type: 'array' });
+                    zip.file(filename, fileBuffer);
+                }
+            }
+            showLoading(true, "Zipping files...");
+            const content = await zip.generateAsync({ type: "blob" });
+            saveAs(content, `${baseFilename}_split_files.zip`);
+        }
+        
+        function downloadFile(data, baseFilename) {
+            const outputFormat = document.getElementById('outputFormat').value;
+            const filename = `${baseFilename}.${outputFormat}`;
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            
+            if (outputFormat === 'csv') {
+                const csvOutput = XLSX.utils.sheet_to_csv(worksheet);
+                saveAs(new Blob([csvOutput], { type: 'text/csv;charset=utf-8;' }), filename);
+            } else if (outputFormat === 'xlsx') {
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+                const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+                saveAs(new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' }), filename);
+            } else if (outputFormat === 'xls') { // Added XLS output for merged files
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+                const excelBuffer = XLSX.write(workbook, { bookType: 'xls', type: 'array' });
+                saveAs(new Blob([excelBuffer], { type: 'application/vnd.ms-excel' }), filename);
+            }
+        }
+
+        function showLoading(isLoading, message = "Processing...") {
+            loadingText.textContent = message;
+            loadingModal.classList.toggle('hidden', !isLoading);
+            loadingModal.classList.toggle('flex', isLoading);
+        }
+        function showError(message) {
+            errorText.textContent = message;
+            errorModal.classList.remove('hidden');
+            errorModal.classList.add('flex');
+        }
+
+        // --- Theme and Time Functions ---
+        // FIXED: Updated function to set date and time in separate elements
+        function setDateTime() {
+            const now = new Date();
+            dateDisplayEl.textContent = now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            timeDisplayEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('theme-icon-light').classList.toggle('hidden', isDark);
+            document.getElementById('theme-icon-dark').classList.toggle('hidden', !isDark);
+        }
+
+        // --- Initial Setup ---
+        (function init() {
+            handleOperationChange();
+            setDateTime();
+            setInterval(setDateTime, 1000 * 30); // Update every 30s
+            
+            // Check for saved theme or system preference
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const savedTheme = localStorage.getItem('theme');
+
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.body.classList.add('dark');
+            }
+            
+            // Sync icon state after setting theme
+            const isDark = document.body.classList.contains('dark');
+            document.getElementById('theme-icon-light').classList.toggle('hidden', isDark);
+            document.getElementById('theme-icon-dark').classList.toggle('hidden', !isDark);
+        })();
+    </script>
+</body>
+</html>
